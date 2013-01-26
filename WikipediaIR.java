@@ -25,6 +25,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.*;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.queryparser.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.tartarus.snowball.ext.PorterStemmer;
@@ -45,15 +46,28 @@ public class WikipediaIR {
             }
 
             // Make sure we can access StopWords.txt
-            File stopWords = new File ("StopWords.txt");
-            if (!stopWords.canRead()) {
+            File stopWordsFile = new File ("StopWords.txt");
+            if (!stopWordsFile.canRead()) {
                 System.out.println("Error: Cannot read StopWords.txt");
                 return;
             }
 
-            // Initialize FileReader, and create the StandardAnalyzer that will also use stop words.
-            FileReader stopWordReader = new FileReader(stopWords);
-            Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_41,stopWordReader);
+            // Initialize CharArraySet for holding stopWords; required for the EnglishAnalyzer
+            CharArraySet stopWordSet = new CharArraySet(Version.LUCENE_41, 700, true);
+            
+            // Use bufferedReader to build stopWordsSet
+            FileReader stopWordReader = new FileReader(stopWordsFile);
+            BufferedReader bufferedReader = new BufferedReader(stopWordReader);
+            String line = null;
+            
+            while ((line = bufferedReader.readLine()) != null) {
+                stopWordSet.add(line);
+            }
+            
+            bufferedReader.close();
+            
+            // Initialize analyzer with our stopWords
+            EnglishAnalyzer analyzer = new EnglishAnalyzer(Version.LUCENE_41,stopWordSet);
             
             File index = new File("index");
             Directory directory;
@@ -78,7 +92,6 @@ public class WikipediaIR {
                 traverseAndIndex(dir,iwriter);
                 System.out.println("Indexing complete");
                 iwriter.close();
-                
             }
 
             // Now search the index:
