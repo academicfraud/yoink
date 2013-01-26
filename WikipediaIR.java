@@ -10,13 +10,20 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.*;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.queryparser.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -28,7 +35,7 @@ public class WikipediaIR {
     
     public static void main(String args[]) {
         try {
-            // Wikipedia files should be located in the same directory, in a folder called "en". 
+            // Wikipedia files should be located in the same directory, in a folder called "en".
             // Files downloaded from http://www.site.uottawa.ca/~diana/csi4107/gikiCLEF/en.zip
             File dir = new File("en");
             if (!dir.isDirectory()) {
@@ -51,7 +58,7 @@ public class WikipediaIR {
             File index = new File("index");
             Directory directory;
             
-            // Check for a folder called index under application root. If it exists, use its 
+            // Check for a folder called index under application root. If it exists, use its
             // contents as the index, otherwise create the folder and build the index
             if (index.isDirectory()) {
                 System.out.println("Using existing Index");
@@ -71,9 +78,9 @@ public class WikipediaIR {
                 traverseAndIndex(dir,iwriter);
                 System.out.println("Indexing complete");
                 iwriter.close();
+                
             }
-            
-            // The following commented block currently throws an exception
+
             // Now search the index:
             DirectoryReader ireader = DirectoryReader.open(directory);
             IndexSearcher isearcher = new IndexSearcher(ireader);
@@ -87,6 +94,30 @@ public class WikipediaIR {
                 org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
                 if (VERBOSE) System.out.println(hitDoc.toString());
             }
+            
+            ////
+            //****************************************************************************************
+            // This code will create a text file "out.txt" containing all the terms in the index.
+            // References:
+            // http://lucene.apache.org/core/4_1_0/MIGRATE.html
+            // http://stackoverflow.com/questions/14211974/how-can-i-read-and-print-lucene-index-4-0
+            //****************************************************************************************
+            AtomicReader ar = SlowCompositeReaderWrapper.wrap(ireader);
+            Terms terms = ar.terms("contents");
+            
+            TermsEnum termsEnum= terms.iterator(null);
+            BytesRef text;
+            FileWriter fstream = new FileWriter("out.txt");
+            BufferedWriter out = new BufferedWriter(fstream);
+            while((text = termsEnum.next()) != null) {
+                
+                out.write("field=" + "contents" + "; text=" + text.utf8ToString() + "\n");  
+                //System.out.println("field=" + "contents" + "; text=" + text.utf8ToString());
+            }
+            out.close();
+            //****************************************************************************************
+            ////
+            
             System.out.println("Number of hits " + hits.length);
             ireader.close();
             directory.close();
@@ -132,13 +163,6 @@ public class WikipediaIR {
                 traverseAndIndex(fileList[i],iwriter);
             }
         }
-    }
-    
-    public static String stem(String term) {
-        PorterStemmer stemmer = new PorterStemmer();
-        stemmer.setCurrent(term);
-        stemmer.stem();
-        return stemmer.getCurrent();
     }
 
 }
