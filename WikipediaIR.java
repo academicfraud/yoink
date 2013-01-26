@@ -36,13 +36,6 @@ public class WikipediaIR {
                 return;
             }
 
-            // Create a folder called index under application root
-            File index = new File("index");
-            boolean indexCreated = index.mkdir();
-            if (indexCreated) {
-                System.out.println("Index directory created");
-            }
-
             // Make sure we can access StopWords.txt
             File stopWords = new File ("StopWords.txt");
             if (!stopWords.canRead()) {
@@ -53,17 +46,31 @@ public class WikipediaIR {
             // Initialize FileReader, and create the StandardAnalyzer that will also use stop words.
             FileReader stopWordReader = new FileReader(stopWords);
             Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_41,stopWordReader);
-
-            // To store an index on disk, use this instead:
-            Directory directory = FSDirectory.open(index);
-            IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_41, analyzer);
-            IndexWriter iwriter = new IndexWriter(directory, config);
-
-            // Traverse files and index
-            System.out.println("Begin indexing");
-            traverseAndIndex(dir,iwriter);
-            System.out.println("Indexing complete");
-            iwriter.close();
+            
+            File index = new File("index");
+            Directory directory;
+            
+            // Check for a folder called index under application root. If it exists, use its 
+            // contents as the index, otherwise create the folder and build the index
+            if (index.isDirectory()) {
+                System.out.println("Using existing Index");
+                directory = FSDirectory.open(index);
+            } else {
+                // Create a folder called index under application root
+                boolean indexCreated = index.mkdir();
+                if (indexCreated) System.out.println("Index directory created");
+    
+                // Initialize Lucene IndexWriter
+                directory = FSDirectory.open(index);
+                IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_41, analyzer);
+                IndexWriter iwriter = new IndexWriter(directory, config);
+    
+                // Traverse files and index
+                System.out.println("Begin indexing");
+                traverseAndIndex(dir,iwriter);
+                System.out.println("Indexing complete");
+                iwriter.close();
+            }
             
 //            // The following commented block currently throws an exception
 //            // Now search the index:
