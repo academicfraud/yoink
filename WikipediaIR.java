@@ -20,6 +20,7 @@ import org.apache.lucene.store.*;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.queryparser.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.tartarus.snowball.ext.PorterStemmer;
 
 public class WikipediaIR {
     
@@ -72,24 +73,23 @@ public class WikipediaIR {
                 iwriter.close();
             }
             
-//            // The following commented block currently throws an exception
-//            // Now search the index:
-//            DirectoryReader ireader = DirectoryReader.open(directory);
-//            IndexSearcher isearcher = new IndexSearcher(ireader);
-//            // Parse a simple query that searches for "text":
-//            QueryParser parser = new QueryParser(Version.LUCENE_41, "contents", analyzer);
-//            Query query = parser.parse("Which authors were born in and write about the Bohemian Forest?");
-//            ScoreDoc[] hits = isearcher.search(query, null, 1000).scoreDocs;
-//            
-//            System.out.println("Number of hits " + hits.length);
-//            // Iterate through the results:
-//            for (int i = 0; i < hits.length; i++) {
-//                org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
-//                System.out.println(hitDoc.toString());
-//            }
-//            System.out.println("Number of hits " + hits.length);
-//            ireader.close();
-//            directory.close();
+            // The following commented block currently throws an exception
+            // Now search the index:
+            DirectoryReader ireader = DirectoryReader.open(directory);
+            IndexSearcher isearcher = new IndexSearcher(ireader);
+            // Parse a simple query that searches for "text":
+            QueryParser parser = new QueryParser(Version.LUCENE_41, "contents", analyzer);
+            Query query = parser.parse("Which authors were born in and write about the Bohemian Forest?");
+            ScoreDoc[] hits = isearcher.search(query, null, 1000).scoreDocs;
+            
+            // Iterate through the results:
+            for (int i = 0; i < hits.length; i++) {
+                org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
+                if (VERBOSE) System.out.println(hitDoc.toString());
+            }
+            System.out.println("Number of hits " + hits.length);
+            ireader.close();
+            directory.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,9 +108,12 @@ public class WikipediaIR {
                 {
                     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-                    org.w3c.dom.Document doc = dBuilder.parse(fileList[i]); //Parse a file into a DOM tree.
-                    NodeList nList = doc.getChildNodes();                   //Grab the first node in the DOM tree.
-                    String fileContents = nList.item(0).getTextContent();   //Grab text of this node and of all it's descendant nodes.
+                    // Parse a file into a DOM tree.
+                    org.w3c.dom.Document doc = dBuilder.parse(fileList[i]);
+                    // Grab the first node in the DOM tree.
+                    NodeList nList = doc.getChildNodes();
+                    // Grab text of this node and of all it's descendant nodes.
+                    String fileContents = nList.item(0).getTextContent();
 
                     org.apache.lucene.document.Document idoc = new org.apache.lucene.document.Document();
                     // Index, tokenize, don't store in index document
@@ -129,6 +132,13 @@ public class WikipediaIR {
                 traverseAndIndex(fileList[i],iwriter);
             }
         }
+    }
+    
+    public static String stem(String term) {
+        PorterStemmer stemmer = new PorterStemmer();
+        stemmer.setCurrent(term);
+        stemmer.stem();
+        return stemmer.getCurrent();
     }
 
 }
