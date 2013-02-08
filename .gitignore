@@ -5,6 +5,8 @@
 *.class
 en/
 index/
+out.txt
+Results.txt
 
 #################
 ## Eclipse

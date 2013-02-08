@@ -107,7 +107,8 @@ public class WikipediaIR {
             FileReader queryReader = new FileReader("Queries.txt");
             BufferedReader bufferedQueryReader = new BufferedReader(queryReader);
             //Build a Writer to write to "Results.txt".
-            FileWriter resultsWriter = new FileWriter("Results.txt");
+            FileOutputStream resultsStream = new FileOutputStream("Results.txt");
+            OutputStreamWriter resultsWriter = new OutputStreamWriter(resultsStream,"UTF-8");
             BufferedWriter bufferedResultsWriter = new BufferedWriter(resultsWriter);
             
             // Read in and perform a search using queries one at the time. Write results for each query as well.
@@ -150,20 +151,17 @@ public class WikipediaIR {
             AtomicReader ar = SlowCompositeReaderWrapper.wrap(ireader);
             Terms terms = ar.terms("contents");
             
-            TermsEnum termsEnum= terms.iterator(null);
+            TermsEnum termsEnum = terms.iterator(null);
             BytesRef text;
-            FileWriter fstream = new FileWriter("out.txt");
-            BufferedWriter out = new BufferedWriter(fstream);
+            FileOutputStream outStream = new FileOutputStream("out.txt");
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream,"UTF-8"));
             while((text = termsEnum.next()) != null) {
-                
                 out.write("field=" + "contents" + "; text=" + text.utf8ToString() + "\n");  
                 //System.out.println("field=" + "contents" + "; text=" + text.utf8ToString());
             }
             out.close();
             //****************************************************************************************
             ////
-            
-            System.out.println("Number of hits " + hits.length);
             ireader.close();
             directory.close();
         } catch (Exception e) {
@@ -177,7 +175,7 @@ public class WikipediaIR {
 
         for (int i = 0; i < fileList.length; i++)
         {
-            if (fileList[i].isFile())
+            if (fileList[i].isFile() && fileList[i].length() > 0)
             {
                 if (VERBOSE) System.out.println("Indexing" + fileList[i].getAbsolutePath());
                 try
