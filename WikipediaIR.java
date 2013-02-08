@@ -94,19 +94,51 @@ public class WikipediaIR {
                 iwriter.close();
             }
 
-            // Now search the index:
+            //************************
+            //**      SEARCH        **
+            //************************  
+            
+            System.out.println("Beginning Search");
+            // Build the IndexSearcher, which searches the index using a query and returns results.
             DirectoryReader ireader = DirectoryReader.open(directory);
             IndexSearcher isearcher = new IndexSearcher(ireader);
-            // Parse a simple query that searches for "text":
-            QueryParser parser = new QueryParser(Version.LUCENE_41, "contents", analyzer);
-            Query query = parser.parse("Which authors were born in and write about the Bohemian Forest?");
-            ScoreDoc[] hits = isearcher.search(query, null, 1000).scoreDocs;
             
-            // Iterate through the results:
-            for (int i = 0; i < hits.length; i++) {
-                org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
-                if (VERBOSE) System.out.println(hitDoc.toString());
-            }
+            // Build a Reader to read from "Queries.txt".
+            FileReader queryReader = new FileReader("Queries.txt");
+            BufferedReader bufferedQueryReader = new BufferedReader(queryReader);
+            //Build a Writer to write to "Results.txt".
+            FileWriter resultsWriter = new FileWriter("Results.txt");
+            BufferedWriter bufferedResultsWriter = new BufferedWriter(resultsWriter);
+            
+            // Read in and perform a search using queries one at the time. Write results for each query as well.
+            String queryLine = null;
+            while ((queryLine = bufferedQueryReader.readLine()) != null) 
+            {
+                // The ID component of a query.
+                String queryID = queryLine.substring(0,10);
+                // The Text component of a query. 
+                String queryText = queryLine.substring(11);
+                // Remove '?' because at least one of the queries was giving a problem about using '?' as a wildcard is illegal.
+                queryText = queryText.replace('?',' ');
+                // Build QueryParser.
+                QueryParser parser = new QueryParser(Version.LUCENE_41, "contents", analyzer);
+                // Parse Text component of a query into a query usable by Lucene.
+                Query query = parser.parse(queryText);
+                // Perform a search using the query, get the top 20 results.
+                ScoreDoc[] hits = isearcher.search(query, null, 20).scoreDocs;
+                // Write the top 20 results into "Results.txt".
+                for (int i = 0; i < hits.length; i++) 
+                {
+                    org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
+                    bufferedResultsWriter.write(queryID + " 1 " + hitDoc.getField("path").stringValue() + "\n");
+                    bufferedResultsWriter.flush();
+                }
+            }   
+            bufferedQueryReader.close();
+            bufferedResultsWriter.close();
+            System.out.println("Search Finished");
+            System.out.println("Check out Results.txt");
+            //**** 
             
             ////
             //****************************************************************************************
