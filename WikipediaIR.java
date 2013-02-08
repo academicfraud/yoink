@@ -131,7 +131,10 @@ public class WikipediaIR {
                 for (int i = 0; i < hits.length; i++) 
                 {
                     org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
-                    bufferedResultsWriter.write(queryID + " 1 " + hitDoc.getField("path").stringValue() + "\n");
+                    // Match format of CorrectResults.txt
+                    String resultPath = hitDoc.getField("path").stringValue().replace(".xml", "");
+                    resultPath = resultPath.replace(System.getProperty("user.dir") + "/", "");
+                    bufferedResultsWriter.write(queryID + "\t" + resultPath + "\n");
                     bufferedResultsWriter.flush();
                 }
             }   
