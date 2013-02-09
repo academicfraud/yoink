@@ -167,6 +167,8 @@ public class WikipediaIR {
             ////
             ireader.close();
             directory.close();
+            
+            Evaluation evaluation = new Evaluation("Queries.txt", "CorrectResults.txt", "Results.txt");
         } catch (Exception e) {
             e.printStackTrace();
         }
