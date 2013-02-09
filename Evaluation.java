@@ -22,6 +22,11 @@ public class Evaluation {
             relevantHash  = buildDocumentsHash(correctResultReader);
             retrievedHash = buildDocumentsHash(resultReader);
             
+            int count = 0;
+            double precisionTotal = 0;
+            double recallTotal    = 0;
+            double fMeasureTotal  = 0;
+            
             BufferedReader bufferedQueryReader = new BufferedReader(queryReader);
             
             DecimalFormat df = new DecimalFormat("0.00");
@@ -50,11 +55,32 @@ public class Evaluation {
                 // Calculate precision, recall, f-measure
                 double precision = intersection / retrievedSize;
                 double recall    = intersection / relevantSize;
-                double fMeasure  = 2 * (precision * recall) / (precision + recall);
+                double fMeasure  = 0;
+                
+                if (precision + recall > 0)
+                    fMeasure  = 2 * (precision * recall) / (precision + recall);
+                
+                // If there's a recall value, add to total, and increase count
+                // Will be used to calculate averages
+                if (relevantSize > 0) {
+                    recallTotal    += recall;
+                    precisionTotal += precision;
+                    fMeasureTotal  += fMeasure;
+                    count++;
+                }
+                
                 System.out.println(queryId + "\tRecall: " + df.format(recall) + ";\tPrecision: " + 
                                    df.format(precision) + ";\tF-Measure: " + df.format(fMeasure));
             }
             bufferedQueryReader.close();
+            
+            // Calculate and print averages
+            String recallAvg    = df.format(recallTotal/count);
+            String precisionAvg = df.format(precisionTotal/count);
+            String fMeasureAvg  = df.format(fMeasureTotal/count);
+            
+            System.out.println("Recall Avg: " + recallAvg + ";\tPrecision Avg: " + precisionAvg +
+                               ";\tF-Measure Avg: " + fMeasureAvg);
             
         } catch (Exception e) {
             e.printStackTrace();
