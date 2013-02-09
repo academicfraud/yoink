@@ -67,7 +67,7 @@ public class WikipediaIR {
             bufferedReader.close();
             
             // Initialize analyzer with our stopWords
-            EnglishAnalyzer analyzer = new EnglishAnalyzer(Version.LUCENE_41,stopWordSet);
+            CustomAnalyzer analyzer = new CustomAnalyzer(Version.LUCENE_41,stopWordSet);
             
             File index = new File("index");
             Directory directory;

@@ -117,6 +117,9 @@ public final class CustomAnalyzer extends StopwordAnalyzerBase
 		result = new PatternReplaceFilter(result,Pattern.compile("^.*\\.(com|org|jpg|png)$"),null,true);
 		//****
 		
+		// Filter out terms with non-alphanumeric chars
+		result = new PatternReplaceFilter(result,Pattern.compile("^.*[^a-zA-Z0-9]+.*$"),null,true);
+		
 		return new TokenStreamComponents(source, result);
 	}
 }
