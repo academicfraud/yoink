@@ -133,7 +133,10 @@ public class WikipediaIR {
                     org.apache.lucene.document.Document hitDoc = isearcher.doc(hits[i].doc);
                     // Match format of CorrectResults.txt
                     String resultPath = hitDoc.getField("path").stringValue().replace(".xml", "");
-                    resultPath = resultPath.replace(System.getProperty("user.dir") + "/", "");
+                    resultPath = resultPath.replace(System.getProperty("user.dir") + 
+                            System.getProperty("file.separator"), "");
+                    // Fix for windows paths
+                    resultPath = resultPath.replace("\\", "/");
                     bufferedResultsWriter.write(queryID + "\t" + resultPath + "\n");
                     bufferedResultsWriter.flush();
                 }
