@@ -72,11 +72,10 @@ public class Evaluation {
                 String[] splitLine = resultLine.split("\\s+");
                 String queryId = splitLine[0];
                 
-                if (!relevantHash.containsKey(queryId)) {
+                if (!relevantHash.containsKey(queryId))
                     relevantHash.put(queryId, new HashSet<String>());
-                } else {
-                    relevantHash.get(queryId).add(splitLine[1]);
-                }
+                
+                relevantHash.get(queryId).add(splitLine[1]);
             }
             bufferedResultReader.close();
             
